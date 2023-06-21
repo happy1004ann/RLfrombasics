@@ -1,11 +1,11 @@
-import gym
+import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
 
-#Hyperparameters
+# Hyperparameters
 learning_rate = 0.0002
 gamma         = 0.98
 n_rollout     = 10
@@ -72,20 +72,19 @@ def main():
 
     for n_epi in range(10000):
         done = False
+        truncated = False
+
         s, _ = env.reset()
-        while not done:
-            for t in range(n_rollout):
+        while not (done or truncated):
+            for _ in range(n_rollout):
                 prob = model.pi(torch.from_numpy(s).float())
                 m = Categorical(prob)
                 a = m.sample().item()
-                s_prime, r, done, truncated, info = env.step(a)
+                s_prime, r, done, truncated, _ = env.step(a)
                 model.put_data((s,a,r,s_prime,done))
                 
                 s = s_prime
                 score += r
-                
-                if done:
-                    break                     
             
             model.train_net()
             

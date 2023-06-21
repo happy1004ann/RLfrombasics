@@ -39,7 +39,7 @@ def main():
     model = Model()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    for step in range(10000):
+    for _ in range(10000):
         batch_x = np.random.choice(data_x, 32) # 랜덤하게 뽑힌 32개의 데이터로 mini-batch를 구성
         batch_x_tensor = torch.from_numpy(batch_x).float().unsqueeze(1)
         pred = model(batch_x_tensor)

@@ -1,11 +1,11 @@
-import gym
+import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
 
-#Hyperparameters
+# Hyperparameters
 learning_rate = 0.0002
 gamma         = 0.98
 
@@ -45,12 +45,13 @@ def main():
     for n_epi in range(10000):
         s, _ = env.reset()
         done = False
+        truncated = False
         
-        while not done: # CartPole-v1 forced to terminates at 500 step.
+        while not (done or truncated): # CartPole-v1 forced to terminates at 500 step.
             prob = pi(torch.from_numpy(s).float())
             m = Categorical(prob)
             a = m.sample()
-            s_prime, r, done, truncated, info = env.step(a.item())
+            s_prime, r, done, truncated, _ = env.step(a.item())
             pi.put_data((r,prob[a]))
             s = s_prime
             score += r

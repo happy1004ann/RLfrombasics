@@ -1,13 +1,13 @@
-import gym
 import collections
 import random
 
+import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-#Hyperparameters
+# Hyperparameters
 learning_rate = 0.0005
 gamma         = 0.98
 buffer_limit  = 50000
@@ -61,7 +61,7 @@ class Qnet(nn.Module):
             return out.argmax().item()
             
 def train(q, q_target, memory, optimizer):
-    for i in range(10):
+    for _ in range(10):
         s,a,r,s_prime,done_mask = memory.sample(batch_size)
 
         q_out = q(s)
@@ -86,20 +86,19 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(10000):
-        epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) #Linear annealing from 8% to 1%
+        epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) # Linear annealing from 8% to 1%
         s, _ = env.reset()
         done = False
+        truncated = False
 
-        while not done:
+        while not (done or truncated):
             a = q.sample_action(torch.from_numpy(s).float(), epsilon)      
-            s_prime, r, done, truncated, info = env.step(a)
+            s_prime, r, done, truncated, _ = env.step(a)
             done_mask = 0.0 if done else 1.0
-            memory.put((s,a,r/100.0,s_prime, done_mask))
+            memory.put((s, a, r/100.0, s_prime, done_mask))
             s = s_prime
 
             score += r
-            if done:
-                break
             
         if memory.size()>2000:
             train(q, q_target, memory, optimizer)
